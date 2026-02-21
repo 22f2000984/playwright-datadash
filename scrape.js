@@ -9,16 +9,19 @@ const { chromium } = require("playwright");
 
   for (const seed of seeds) {
     const url = `https://exam.sanand.workers.dev/seed/${seed}`;
-    await page.goto(url);
+    await page.goto(url, { waitUntil: "networkidle" });
 
-    const numbers = await page.$$eval("table td", tds =>
-      tds
-        .map(td => td.innerText.trim())
-        .filter(v => v.match(/^-?\d+(\.\d+)?$/))
-        .map(Number)
-    );
+    // Extract ALL numbers from page text
+    const numbers = await page.evaluate(() => {
+      const text = document.body.innerText;
+      const matches = text.match(/-?\d+(\.\d+)?/g) || [];
+      return matches.map(Number);
+    });
 
-    total += numbers.reduce((a, b) => a + b, 0);
+    const pageSum = numbers.reduce((a, b) => a + b, 0);
+    total += pageSum;
+
+    console.log(`Seed ${seed} sum = ${pageSum}`);
   }
 
   console.log("FINAL_SUM =", total);
