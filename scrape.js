@@ -31,3 +31,4 @@ jobs:
 
       - name: Run Playwright scraper - 22f2000984@ds.study.iitm.ac.in
         run: node scrape.js
+console.log("FINAL_SUM =", total);
