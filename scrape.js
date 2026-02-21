@@ -11,10 +11,20 @@ const { chromium } = require("playwright");
     const url = `https://exam.sanand.workers.dev/seed/${seed}`;
     await page.goto(url);
 
-    // 🔑 CRITICAL: wait for tables to actually render
-    await page.waitForSelector("table", { timeout: 10000 });
+    // 1️⃣ Wait for iframe to load
+    await page.waitForSelector("iframe");
 
-    const numbers = await page.$$eval(
+    // 2️⃣ Get the iframe
+    const frame = page.frames().find(f => f.url().includes(`/seed/${seed}`));
+    if (!frame) {
+      throw new Error("Seed iframe not found");
+    }
+
+    // 3️⃣ Wait for table inside iframe
+    await frame.waitForSelector("table");
+
+    // 4️⃣ Extract numbers from td + th
+    const numbers = await frame.$$eval(
       "table td, table th",
       cells =>
         cells
