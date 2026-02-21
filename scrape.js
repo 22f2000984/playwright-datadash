@@ -1,36 +1,33 @@
-const { chromium } = require("playwright");
+name: Playwright DataDash QA
 
-(async () => {
-  const seeds = [23,24,25,26,27,28,29,30,31,32];
-  let total = 0;
+on:
+  workflow_dispatch:
+  push:
 
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-  for (const seed of seeds) {
-    const url = `https://exam.sanand.workers.dev/seed/${seed}`;
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    let pageSum = 0;
+      - name: Install dependencies
+        run: |
+          npm init -y
+          npm install playwright
+          npx playwright install chromium
 
-    // 🔑 Listen for JSON responses
-    page.on("response", async (response) => {
-      try {
-        const ct = response.headers()["content-type"] || "";
-        if (ct.includes("application/json")) {
-          const data = await response.json();
-          const nums = JSON.stringify(data).match(/-?\d+(\.\d+)?/g) || [];
-          pageSum += nums.map(Number).reduce((a, b) => a + b, 0);
-        }
-      } catch (_) {}
-    });
+      - name: Start Xvfb (for headed Chromium)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          Xvfb :99 -screen 0 1280x720x24 &
+          echo "DISPLAY=:99" >> $GITHUB_ENV
 
-    await page.goto(url, { waitUntil: "networkidle" });
-    await page.waitForTimeout(2000); // allow async fetches
-
-    console.log(`Seed ${seed} sum = ${pageSum}`);
-    total += pageSum;
-  }
-
-  console.log("FINAL_SUM =", total);
-  await browser.close();
-})();
+      - name: Run Playwright scraper - 22f2000984@ds.study.iitm.ac.in
+        run: node scrape.js
