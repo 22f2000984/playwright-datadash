@@ -1,34 +1,28 @@
-name: Playwright DataDash QA
+const { chromium } = require("playwright");
 
-on:
-  workflow_dispatch:
-  push:
+(async () => {
+  const seeds = [23,24,25,26,27,28,29,30,31,32];
+  let total = 0;
 
-jobs:
-  scrape:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+  const browser = await chromium.launch({ headless: false });
+  const page = await browser.newPage();
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+  for (const seed of seeds) {
+    const url = `https://exam.sanand.workers.dev/seed/${seed}`;
+    await page.goto(url);
+    await page.waitForTimeout(5000);
 
-      - name: Install dependencies
-        run: |
-          npm init -y
-          npm install playwright
-          npx playwright install chromium
+    const numbers = await page.evaluate(() => {
+      const text = document.documentElement.innerText;
+      return (text.match(/-?\d+/g) || []).map(Number);
+    });
 
-      - name: Start Xvfb (for headed Chromium)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb
-          Xvfb :99 -screen 0 1280x720x24 &
-          echo "DISPLAY=:99" >> $GITHUB_ENV
+    const pageSum = numbers.reduce((a, b) => a + b, 0);
+    total += pageSum;
 
-      - name: Run Playwright scraper - 22f2000984@ds.study.iitm.ac.in
-        run: node scrape.js
-console.log("FINAL_SUM =", total);
+    console.log(`Seed ${seed} sum = ${pageSum}`);
+  }
+
+  console.log("FINAL_SUM =", total);
+  await browser.close();
+})();
