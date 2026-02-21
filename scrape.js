@@ -21,5 +21,7 @@ const { request } = require("playwright");
     total += pageSum;
   }
 
+//   console.log("FINAL_SUM =", total);
+  console.log("DEBUG_TOTAL", total);
   console.log("FINAL_SUM =", total);
 })();
