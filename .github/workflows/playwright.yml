@@ -7,7 +7,6 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -22,6 +21,13 @@ jobs:
           npm init -y
           npm install playwright
           npx playwright install chromium
+
+      - name: Start Xvfb (for headed Chromium)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          Xvfb :99 -screen 0 1280x720x24 &
+          echo "DISPLAY=:99" >> $GITHUB_ENV
 
       - name: Run Playwright scraper - 22f2000984@ds.study.iitm.ac.in
         run: node scrape.js
